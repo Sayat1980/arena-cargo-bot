@@ -1,26 +1,39 @@
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 import os
 import csv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-DATA_FILE = 'tracking.csv'
+# Функция обработки кнопок
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "show_statuses":
+        response = ""
+        try:
+            with open("tracking.csv", newline="", encoding="utf-8") as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if len(row) >= 2:
+                        response += f"{row[0]} — {row[1]}\n"
+        except FileNotFoundError:
+            response = "Файл tracking.csv не найден."
+        await query.edit_message_text(text=response or "Нет данных.")
+    
+    elif query.data == "goto_channel":
+        await query.edit_message_text(text="Перейдите в наш канал: https://t.me/arenacargo")
 
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Я бот для отслеживания посылок.")
+    keyboard = [
+        [InlineKeyboardButton("Показать статусы", callback_data="show_statuses")],
+        [InlineKeyboardButton("Канал ArenaCargo", callback_data="goto_channel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
 
-async def add_tracking(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    tracking_number = ' '.join(context.args)
-    if not tracking_number:
-        await update.message.reply_text("Укажите номер трека после команды /add")
-        return
-
-    with open(DATA_FILE, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([tracking_number])
-
-    await update.message.reply_text(f"Трек-номер {tracking_number} сохранён.")
-
+# Запуск бота
 app = ApplicationBuilder().token(os.getenv("TOKEN")).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("add", add_tracking))
+app.add_handler(CallbackQueryHandler(button_handler))
 app.run_polling()
