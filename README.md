@@ -1,1 +1,1 @@
-arena otsl
+arena ot
