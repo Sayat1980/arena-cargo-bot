@@ -61,7 +61,15 @@ def main():
     app.add_handler(CommandHandler('start', start))
     app.add_handler(conv_handler)
 
-    app.run_polling()
+    # Webhook URL
+WEBHOOK_HOST = os.getenv("WEBHOOK_URL")  # Пример: https://your-app.up.railway.app
+WEBHOOK_PATH = f"/{os.getenv('TOKEN')}"
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
+app.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.environ.get('PORT', 8000)),
+    webhook_url=WEBHOOK_URL
+)
 if __name__ == '__main__':
     main()
