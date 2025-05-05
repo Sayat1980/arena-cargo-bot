@@ -54,7 +54,7 @@ async def track_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # Запуск бота
-if _name_ == "_main_":
+if __name__ == "__main__":
     app = ApplicationBuilder().token(os.getenv("TOKEN")).build()
 
     conv_handler = ConversationHandler(
